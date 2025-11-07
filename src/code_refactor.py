@@ -21,6 +21,7 @@ class CodeNotes(BaseModel):
 
 def code_refactor(state: RAGState) -> dict:
     print("--- Refactoring code ---")
+    notes = state["messages"][-1].content
     llm = ChatGoogleGenerativeAI(model="gemini-2.5-pro")
     structured_llm = llm.with_structured_output(WebAppFiles)
     implementation_prompt = ChatPromptTemplate.from_messages(
@@ -38,7 +39,8 @@ def code_refactor(state: RAGState) -> dict:
                 "6. The HTML file is named 'index.html' and the JavaScript file is named 'main.js'\n"
                 "7. Do not use unnecessary styling but ensure the app is lined and structured well and the UI is usable.\n\n"
                 "```js\n{js_content}\n```\n"
-                "\n```html{html_content}\n```",
+                "\n```html{html_content}\n```\n"
+                "Notes: {notes}\n",
             ),
             (
                 "human",
@@ -55,7 +57,7 @@ def code_refactor(state: RAGState) -> dict:
         html_content = f.read()
     web_app = structured_llm.invoke(
         implementation_prompt.format_messages(
-            js_content=js_content, html_content=html_content
+            js_content=js_content, html_content=html_content, notes=notes
         )
     )
 

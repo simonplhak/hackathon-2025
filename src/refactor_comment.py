@@ -4,8 +4,8 @@ from pydantic import BaseModel, Field
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import AIMessage, BaseMessage
 from langchain_core.prompts import ChatPromptTemplate
-from requirement_creator import RequirementsList
 from retriever import RAGState
+
 
 def _read_text_or_none(path: Path) -> str | None:
     try:
@@ -54,7 +54,6 @@ def refactor_comment(state: RAGState) -> Dict[str, List[BaseMessage]]:
     # 2. Set up the LLM with structured output
     llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash-lite")
     implementation_llm = llm.with_structured_output(RefactorCommentsList)
-
 
     prompt = ChatPromptTemplate.from_messages(
         [
