@@ -11,9 +11,6 @@ from langchain_core.messages import AIMessage
 class Requirement(BaseModel):
     """A single software or business requirement extracted from a document."""
 
-    requirement_id: str = Field(
-        description="A unique ID for the requirement (e.g., 'REQ-001')."
-    )
     description: str = Field(
         description="The detailed, testable description of the requirement."
     )
@@ -68,11 +65,11 @@ def generate_requirements(state: RAGState):
     )
 
     # Convert the Pydantic model output to a user-friendly string to pass to the final agent
-    requirements_str = structured_output.model_dump_json(indent=2)
+    # requirements_str = structured_output.model_dump_json(indent=2)
 
     # Update state: Pass the extracted requirements as a new message for the final agent
     extracted_message = AIMessage(
-        content=f"EXTRACTED REQUIREMENTS:\n\n{requirements_str}",
+        content=[structured_output.model_dump()],
         name="requirements_agent",
     )
 
