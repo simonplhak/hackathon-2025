@@ -52,7 +52,7 @@ def refactor_comment(state: RAGState) -> Dict[str, List[BaseMessage]]:
     js_block = js_src if js_src is not None else "<missing main.js>"
 
     # 2. Set up the LLM with structured output
-    llm = ChatGoogleGenerativeAI(model="gemini-2.5-pro")
+    llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash-lite")
     implementation_llm = llm.with_structured_output(RefactorCommentsList)
 
 
@@ -89,14 +89,12 @@ def refactor_comment(state: RAGState) -> Dict[str, List[BaseMessage]]:
     )
 
     messages = prompt.format_messages(html=html_block, js=js_block)
-    commentary_text = llm.invoke(messages).content
-
-
+    commentary_text = implementation_llm.invoke(messages).comments
 
     return {
         "messages": [
             AIMessage(
-                content=commentary_text.model_dump(),  # main() prints this string as-is
+                content=commentary_text,
                 name="refactor_commentary",
             )
         ]
