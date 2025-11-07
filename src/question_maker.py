@@ -61,7 +61,6 @@ def question_maker(state: RAGState) -> dict:
     structured_output = requirements_llm.invoke(
         extraction_prompt.format_messages(context=requirements.model_dump_json())
     )
-    print(structured_output)
     qnas = []
     for question in structured_output.questions[:1]:
         answer = input(f"{question}\n")
