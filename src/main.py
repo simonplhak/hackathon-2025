@@ -9,6 +9,7 @@ from config import DATA_DIR
 import decision_bind
 import question_maker
 import implement_app
+import refactor_comment
 from requirement_creator import generate_requirements
 from retriever import RAGState, get_retriever, retrieve
 import user_feedback
@@ -33,6 +34,7 @@ def main(path: Path):
     graph.add_node("user_feedback", user_feedback.user_feedback)
     graph.add_node("user_notes", user_feedback.user_notes)
     graph.add_node("code_refactor", code_refactor.code_refactor)
+    graph.add_node("refactor_comment", refactor_comment.refactor_comment)
 
     # Define the workflow:
     # START -> retrieve -> generate_requirements -> question_maker -> amend_requirements -> implement_app -> END
@@ -46,7 +48,8 @@ def main(path: Path):
         decision_bind.route_on_user_decision,
         {"approve": "implementation", "reject": "question_maker", "unknown": END},
     )
-    graph.add_edge("implementation", "user_feedback")
+    graph.add_edge("implementation", "refactor_comment")
+    graph.add_edge("refactor_comment", "code_refactor")
     # TODO: replace implementation with implementation_refactor
     graph.add_conditional_edges(
         "user_feedback",
