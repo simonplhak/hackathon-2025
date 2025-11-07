@@ -2,6 +2,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from langgraph.graph import StateGraph, START, END
 from langchain_core.messages import HumanMessage
+import amend_requirements
 from config import DATA_DIR
 
 import question_maker
@@ -22,12 +23,14 @@ def main(path: Path):
     graph.add_node("retrieve", lambda state: retrieve(state, retriever))
     graph.add_node("generate_requirements", generate_requirements)
     graph.add_node("question_maker", question_maker.question_maker)
+    graph.add_node("amend_requirements", amend_requirements.amend_requirements)
 
     # Define the workflow (always go from retrieve to generate)
     graph.add_edge(START, "retrieve")
     graph.add_edge("retrieve", "generate_requirements")
     graph.add_edge("generate_requirements", "question_maker")
-    graph.add_edge("question_maker", END)
+    graph.add_edge("question_maker", "amend_requirements")
+    graph.add_edge("amend_requirements", END)
 
     # Compile and run
     app = graph.compile()

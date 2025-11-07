@@ -76,14 +76,14 @@ def question_maker(state: RAGState) -> dict:
     )
     print(structured_output)
     qnas = []
-    for question in structured_output.questions:
+    for question in structured_output.questions[:1]:
         answer = input(question)
         qnas.append(QnA(question=question, answer=answer))
     qnas = QuestionsAndAnswers(questions_and_answers=qnas)
     # # 2. Prepare the output message
     final_message = AIMessage(
         content=[qnas.model_dump()],
-        name="refinement_agent",
+        name="question_maker",
     )
 
     # # # 3. Update state with the new message
