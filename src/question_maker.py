@@ -62,7 +62,7 @@ def question_maker(state: RAGState) -> dict:
         extraction_prompt.format_messages(context=requirements.model_dump_json())
     )
     qnas = []
-    for question in structured_output.questions[:1]:
+    for question in structured_output.questions[:3]:
         answer = input(f"{question}\n")
         qnas.append(QnA(question=question, answer=answer))
     qnas = QuestionsAndAnswers(questions_and_answers=qnas)
@@ -71,7 +71,6 @@ def question_maker(state: RAGState) -> dict:
         content=[qnas.model_dump()],
         name="question_maker",
     )
-
     # # # 3. Update state with the new message
     # # # IMPORTANT: The state structure is defined to aggregate messages, so we return a list.
     return {"messages": [final_message]}
