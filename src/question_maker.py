@@ -1,9 +1,10 @@
 from pydantic import BaseModel, Field
-from requirement_creator import RequirementsList
 from retriever import RAGState
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.messages import AIMessage
+
+from utils import extract_requirements_from_state
 
 llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash-lite")
 
@@ -34,11 +35,7 @@ def question_maker(state: RAGState) -> dict:
     print("--- REFINING REQUIREMENTS ---")
 
     # 1. Get the output from the previous node (the last message)
-    last_message = state["messages"][-1]
-    # Example: Count the requirements and generate a summary
-    requirements: RequirementsList = RequirementsList.model_validate(
-        last_message.content[0]
-    )
+    requirements = extract_requirements_from_state(state)
 
     requirements_llm = llm.with_structured_output(Questions)
 

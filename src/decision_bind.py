@@ -5,9 +5,18 @@ import re
 from typing import Dict, Any
 from langchain_core.messages import HumanMessage, AIMessage
 
+from requirement_creator import RequirementsList
+
 # --- Simple, robust YES/NO router (no external module needed) ---
-YES_PAT = re.compile(r"\b(yes|y|approve|approved|ok|okay|agree|accepted|accept|looks good|ship it)\b", re.I)
-NO_PAT  = re.compile(r"\b(no|n|reject|rejected|disagree|not ok|needs changes|question|questions|deny|denied)\b", re.I)
+YES_PAT = re.compile(
+    r"\b(yes|y|approve|approved|ok|okay|agree|accepted|accept|looks good|ship it)\b",
+    re.I,
+)
+NO_PAT = re.compile(
+    r"\b(no|n|reject|rejected|disagree|not ok|needs changes|question|questions|deny|denied)\b",
+    re.I,
+)
+
 
 def route_on_user_decision(state: Dict[str, Any]) -> str:
     """
@@ -16,7 +25,9 @@ def route_on_user_decision(state: Dict[str, Any]) -> str:
       - "reject"  -> go to question_maker
       - "unknown" -> ask again or stop (depending on your wiring)
     """
-    last_human = next((m for m in reversed(state["messages"]) if isinstance(m, HumanMessage)), None)
+    last_human = next(
+        (m for m in reversed(state["messages"]) if isinstance(m, HumanMessage)), None
+    )
     if not last_human:
         return "unknown"
 
@@ -33,13 +44,11 @@ def present_for_approval(state: Dict[str, Any]) -> Dict[str, Any]:
     """
     Show the last AI answer (JSON) to the user and ask for an approve/reject decision.
     """
-    messages = state["messages"]
-    last_ai = next((m for m in reversed(messages) if isinstance(m, AIMessage)), None)
-    json_payload = last_ai.content if last_ai else "(no JSON found)"
-
-
+    requirements: RequirementsList = RequirementsList.model_validate(
+        state["messages"][-1].content[0]
+    )
     # Use it
-    json_display = format_json_as_bullets(json_payload)
+    json_display = format_json_as_bullets(requirements.model_dump_json())
 
     prompt = (
         "📝 **Please review the generated requirements below:**\n\n"
@@ -48,22 +57,26 @@ def present_for_approval(state: Dict[str, Any]) -> Dict[str, Any]:
         "  • 'approve' (or yes / ok / looks good) → continue to implementation\n"
         "  • 'reject' (or no / needs changes) → describe what to modify\n"
     )
-    return {**state, "messages": messages + [AIMessage(content=prompt)]}
+    approval = input(prompt)
+
+    return {
+        **state,
+        "messages": [HumanMessage(content=approval, name="present_for_approval")],
+    }
 
 
 def implementation_node(state: Dict[str, Any]) -> Dict[str, Any]:
     """Approved path placeholder."""
     return {
         **state,
-        "messages": state["messages"] + [
-            AIMessage(content="✅ Approved. Proceeding to implementation…")
-        ]
+        "messages": state["messages"]
+        + [AIMessage(content="✅ Approved. Proceeding to implementation…")],
     }
-
 
 
 def format_json_as_bullets(raw: str) -> str:
     """Pretty-print payload as categories → bullet list. Accepts JSON or Python-literal strings."""
+
     def coerce_to_data(s: str):
         # Try real JSON first
         try:
@@ -79,7 +92,12 @@ def format_json_as_bullets(raw: str) -> str:
     data = coerce_to_data(raw)
 
     # If it's already structured as we expect: [{"requirements": [...]}]
-    if isinstance(data, list) and len(data) == 1 and isinstance(data[0], dict) and "requirements" in data[0]:
+    if (
+        isinstance(data, list)
+        and len(data) == 1
+        and isinstance(data[0], dict)
+        and "requirements" in data[0]
+    ):
         data = data[0]
 
     # If it's a dict with "requirements": [...]
@@ -95,11 +113,11 @@ def format_json_as_bullets(raw: str) -> str:
             groups.setdefault(cat, []).append(desc)
 
         # Preferred category order
-        preferred = [
-            "Functional",
-            "Non-Functional"
-        ]
-        def sort_key(c): return (preferred.index(c) if c in preferred else 999, c)
+        preferred = ["Functional", "Non-Functional"]
+
+        def sort_key(c):
+            return (preferred.index(c) if c in preferred else 999, c)
+
         ordered_cats = sorted(groups.keys(), key=sort_key)
 
         # Build markdown
@@ -123,7 +141,9 @@ def format_json_as_bullets(raw: str) -> str:
             if isinstance(v, list):
                 for item in v:
                     if isinstance(item, dict):
-                        item_str = ", ".join(f"**{ik}**: {iv}" for ik, iv in item.items())
+                        item_str = ", ".join(
+                            f"**{ik}**: {iv}" for ik, iv in item.items()
+                        )
                         lines.append(f"- {item_str}")
                     else:
                         lines.append(f"- {item}")
