@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 from langgraph.graph import StateGraph, START, END
 from langchain_core.messages import HumanMessage
 import amend_requirements
+import code_refactor
 from config import DATA_DIR
 
 import decision_bind
@@ -10,6 +11,7 @@ import question_maker
 import implement_app
 from requirement_creator import generate_requirements
 from retriever import RAGState, get_retriever, retrieve
+import user_feedback
 
 load_dotenv()
 
@@ -28,6 +30,9 @@ def main(path: Path):
     graph.add_node("amend_requirements", amend_requirements.amend_requirements)
     graph.add_node("present_for_approval", decision_bind.present_for_approval)
     graph.add_node("implementation", implement_app.implement_app)
+    graph.add_node("user_feedback", user_feedback.user_feedback)
+    graph.add_node("user_notes", user_feedback.user_notes)
+    graph.add_node("code_refactor", code_refactor.code_refactor)
 
     # Define the workflow:
     # START -> retrieve -> generate_requirements -> question_maker -> amend_requirements -> implement_app -> END
@@ -41,7 +46,15 @@ def main(path: Path):
         decision_bind.route_on_user_decision,
         {"approve": "implementation", "reject": "question_maker", "unknown": END},
     )
-    graph.add_edge("implementation", END)
+    graph.add_edge("implementation", "user_feedback")
+    # TODO: replace implementation with implementation_refactor
+    graph.add_conditional_edges(
+        "user_feedback",
+        decision_bind.route_on_user_decision,
+        {"approve": END, "reject": "user_notes", "unknown": END},
+    )
+    graph.add_edge("user_notes", "code_refactor")
+    graph.add_edge("code_refactor", "user_feedback")
 
     # Compile and run
     app = graph.compile()
