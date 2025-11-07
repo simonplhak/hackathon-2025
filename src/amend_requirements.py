@@ -10,53 +10,8 @@ from typing import List, Dict
 from langchain_core.messages import BaseMessage
 from question_maker import QuestionsAndAnswers
 from requirement_creator import RequirementsList
-from retriever import RAGState  # Import the shared state type
-
-
-# class AmendmentInput(BaseModel):
-#     """Complete input needed for the amendment process"""
-
-#     requirements: RequirementsList = Field(
-#         description="Original requirements to be modified"
-#     )
-#     feedback: QuestionsAndAnswers = Field(
-#         description="List of Q&A pairs for amendments"
-#     )
-
-
-def extract_qa_from_messages(messages: List[BaseMessage]) -> List[Dict[str, str]]:
-    """
-    Extracts Q&A pairs from the message history.
-    Looks for messages with the name 'requirements_qa' that contain Q&A data.
-
-    Args:
-        messages: List of messages from the state
-    Returns:
-        List of Q&A pairs as dictionaries
-    """
-    qa_pairs = []
-
-    for msg in messages:
-        qa_pairs.append(
-            {
-                "question": msg.content["question"],
-                "answer": msg.content["answer"],
-            }
-        )
-    return qa_pairs
-
-
-def extract_requirements_from_message(message: BaseMessage) -> RequirementsList | None:
-    """
-    Extracts requirements from a message that contains JSON requirements data.
-    Args:
-        message: A message from the state that might contain requirements
-    Returns:
-        RequirementsList if found, None otherwise
-    """
-    if "requirements" in message.name:
-        return RequirementsList.model_validate(message.content[0])
-    return None
+from retriever import RAGState
+from utils import extract_requirements_from_state  # Import the shared state type
 
 
 def amend_requirements(state: RAGState) -> Dict[str, List[BaseMessage]]:
@@ -71,15 +26,7 @@ def amend_requirements(state: RAGState) -> Dict[str, List[BaseMessage]]:
 
     # 1. Get the output from the previous node (the last message)
     qnas = QuestionsAndAnswers.model_validate(state["messages"][-1].content[0])
-    requirements: RequirementsList = RequirementsList.model_validate(
-        state["messages"][-2].content[0]
-    )
-    # 1. Find the most recent requirements in the message history
-    # requirements = None
-    for msg in reversed(state["messages"]):
-        requirements = extract_requirements_from_message(msg)
-        if requirements:
-            break
+    requirements = extract_requirements_from_state(state)
 
     # # 2. Get Q&A pairs (in a real system, these would come from the message history)
     # # qa_pairs = create_mock_qa_messages()
