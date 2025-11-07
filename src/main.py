@@ -4,6 +4,7 @@ from langgraph.graph import StateGraph, START, END
 from langchain_core.messages import HumanMessage
 from config import DATA_DIR
 
+import question_maker
 from requirement_creator import generate_requirements
 from retriever import RAGState, get_retriever, retrieve
 
@@ -20,11 +21,13 @@ def main(path: Path):
     # Note: We use a lambda to pass the retriever to the retrieve node
     graph.add_node("retrieve", lambda state: retrieve(state, retriever))
     graph.add_node("generate_requirements", generate_requirements)
+    graph.add_node("question_maker", question_maker.question_maker)
 
     # Define the workflow (always go from retrieve to generate)
     graph.add_edge(START, "retrieve")
     graph.add_edge("retrieve", "generate_requirements")
-    graph.add_edge("generate_requirements", END)
+    graph.add_edge("generate_requirements", "question_maker")
+    graph.add_edge("question_maker", END)
 
     # Compile and run
     app = graph.compile()
