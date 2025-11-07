@@ -35,16 +35,6 @@ def question_maker(state: RAGState) -> dict:
 
     # 1. Get the output from the previous node (the last message)
     last_message = state["messages"][-1]
-    print(last_message)
-
-    # # Ensure the message is from the requirements agent and extract the JSON string
-
-    # # Extract the JSON string part
-    # json_str = last_message.content.split("EXTRACTED REQUIREMENTS:\n\n", 1)[-1]
-
-    # try:
-    #     # Parse the JSON back into a Python object (dictionary/list)
-    # --- CUSTOM LOGIC GOES HERE ---
     # Example: Count the requirements and generate a summary
     requirements: RequirementsList = RequirementsList.model_validate(
         last_message.content[0]
@@ -77,7 +67,7 @@ def question_maker(state: RAGState) -> dict:
     print(structured_output)
     qnas = []
     for question in structured_output.questions:
-        answer = input(question)
+        answer = input(f"{question}\n")
         qnas.append(QnA(question=question, answer=answer))
     qnas = QuestionsAndAnswers(questions_and_answers=qnas)
     # # 2. Prepare the output message
