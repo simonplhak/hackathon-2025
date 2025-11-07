@@ -7,6 +7,7 @@ from config import DATA_DIR
 
 import decision_bind
 import question_maker
+import implement_app
 from requirement_creator import generate_requirements
 from retriever import RAGState, get_retriever, retrieve
 
@@ -26,10 +27,10 @@ def main(path: Path):
     graph.add_node("question_maker", question_maker.question_maker)
     graph.add_node("amend_requirements", amend_requirements.amend_requirements)
     graph.add_node("present_for_approval", decision_bind.present_for_approval)
-    # TODO: remove
-    graph.add_node("implementation", decision_bind.implementation_node)
+    graph.add_node("implementation", implement_app.implement_app)
 
-    # Define the workflow (always go from retrieve to generate)
+    # Define the workflow:
+    # START -> retrieve -> generate_requirements -> question_maker -> amend_requirements -> implement_app -> END
     graph.add_edge(START, "retrieve")
     graph.add_edge("retrieve", "generate_requirements")
     graph.add_edge("generate_requirements", "question_maker")
