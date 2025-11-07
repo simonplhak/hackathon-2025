@@ -1,7 +1,6 @@
 from pathlib import Path
 from dotenv import load_dotenv
 
-from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma
 from typing import TypedDict, Annotated, List
@@ -10,6 +9,7 @@ from langchain_core.messages import HumanMessage
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.documents import Document
 from langchain_community.embeddings import HuggingFaceEmbeddings
+import pymupdf4llm
 
 load_dotenv()
 
@@ -36,12 +36,12 @@ def get_retriever(pdf_path: Path):
         raise FileNotFoundError(f"PDF file not found at: {pdf_path}")
 
     # 1. Load the PDF
-    loader = PyPDFLoader(str(pdf_path))
-    docs = loader.load()
+    docs = pymupdf4llm.to_markdown(pdf_path)
+    docs = Document(docs)
 
     # 2. Split the document into chunks
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
-    splits = text_splitter.split_documents(docs)
+    splits = text_splitter.split_documents([docs])
 
     # 3. Create a Vector Store and Retriever
     # --- USE HUGGING FACE EMBEDDINGS (Local/Free) ---
