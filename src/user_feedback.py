@@ -21,7 +21,12 @@ def run_server():
     command = [sys.executable, "-m", "http.server", "8000"]
 
     # Start the server in a new, non-blocking process
-    server_process = subprocess.Popen(command, cwd=str(REPO_DIR / "out"))
+    server_process = subprocess.Popen(
+        command,
+        cwd=str(REPO_DIR / "out"),
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
 
     print(f"HTTP Server started on port 8000 with PID: {server_process.pid}")
     print("Access it at: http://127.0.0.1:8000/")
