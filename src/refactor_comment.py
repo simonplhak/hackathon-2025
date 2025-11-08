@@ -88,7 +88,11 @@ def refactor_comment(state: RAGState) -> Dict[str, List[BaseMessage]]:
     )
 
     messages = prompt.format_messages(html=html_block, js=js_block)
-    commentary_text = implementation_llm.invoke(messages).comments
+    res = implementation_llm.invoke(messages)
+    if res is None:
+        commentary_text = ""
+    else:
+        commentary_text = res.comments
 
     return {
         "messages": [
