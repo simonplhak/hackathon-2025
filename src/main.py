@@ -77,5 +77,5 @@ def main(path: Path):
 
 
 if __name__ == "__main__":
-    path = DATA_DIR / "00.pdf"
+    path = DATA_DIR / "01.pdf"
     main(path)
